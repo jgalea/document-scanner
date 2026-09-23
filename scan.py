@@ -22,7 +22,7 @@ Examples:
     # Mixed: first photo is a single-page cover, the rest are spreads.
     scan.py ~/Downloads/book/ --split-spreads --cover 0
 
-Requires: opencv-python, numpy, pillow.
+Requires: opencv-python, numpy, pillow (plus pillow-heif for HEIC photos).
 """
 
 from __future__ import annotations
@@ -32,14 +32,23 @@ import sys
 from pathlib import Path
 import numpy as np
 import cv2
-from PIL import Image
+from PIL import Image, ImageOps
+
+try:  # iPhone photos are HEIC; Pillow only reads them with this plugin.
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    HEIC = True
+except ImportError:
+    HEIC = False
 
 
 # --- core image ops ----------------------------------------------------------
 
 def load_oriented(path: Path) -> np.ndarray:
-    """Read with PIL (auto-orient via EXIF), return BGR ndarray."""
-    pil = Image.open(path)
+    """Read with PIL, apply the EXIF rotation, return BGR ndarray."""
+    if path.suffix.lower() == ".heic" and not HEIC:
+        sys.exit(f"{path.name} is HEIC. Install pillow-heif to read it: pip install pillow-heif")
+    pil = ImageOps.exif_transpose(Image.open(path))
     pil = pil.convert("RGB")
     return cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
 
