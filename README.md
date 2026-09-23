@@ -28,6 +28,8 @@ cd document-scanner
 chmod +x scan.py
 ```
 
+That's macOS and Linux. On Windows, install Python (`winget install Python.Python.3.12`), then in a new PowerShell window run `py -m pip install opencv-python numpy pillow`, download or clone the repo, and run the script as `py scan.py` wherever the examples below say `./scan.py`. The Windows steps haven't been tested on a real Windows machine yet.
+
 ## Usage
 
 ```bash

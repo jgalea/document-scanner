@@ -156,7 +156,8 @@ def process_photo(path: Path, work_dir: Path, pages_dir: Path,
     else:
         warped = warp_to_rect(bgr, corners)
 
-    cv2.imwrite(str(work_dir / f"{path.stem}-warped.jpg"), warped)
+    # cv2.imwrite can't open non-ASCII paths on Windows; encode in memory instead.
+    (work_dir / f"{path.stem}-warped.jpg").write_bytes(cv2.imencode(".jpg", warped)[1].tobytes())
 
     if is_spread:
         left, right = split_at_binding(warped)
@@ -196,6 +197,9 @@ def build_pdf(input_dir: Path, output_pdf: Path,
 # --- CLI ---------------------------------------------------------------------
 
 def main() -> None:
+    # A Windows console or pipe may not be UTF-8; print what it can rather than crash.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="replace")
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input_dir", nargs="?", default=".",
